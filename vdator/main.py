@@ -85,56 +85,62 @@ async def on_message(message):
     url = re.search("(?P<url>https?://[^\s]+)", message.content).group("url")
     paste_parser = PasteParser()
     bdinfo, mediainfo = paste_parser.paste(url)
-    reply = "<" + url + ">" + "\n"
-
-    try:
-      # parse mediainfo
-      mediainfo_parser = MediaInfoParser()
-      mediainfo = mediainfo_parser.parse(mediainfo)
-      checker = Checker(bdinfo, mediainfo)
-      
-      # check metadata
-      reply += checker.check_movie_name()
-      reply += checker.check_tracks_have_language()
-      reply += checker.check_muxing_mode()
-      
-      # check video
-      reply += checker.check_video_track()
-      
-      # check audio
-      reply += checker.print_audio_track_names()
-      reply += checker.check_audio_track_conversions()
-      
-      # TMDB and IMDb People API
-      reply += checker.check_people()
-      reply += checker.spell_check_commentary()
-      
-      # check text
-      reply += checker.print_text_tracks()
-      reply += checker.text_order()
-      
-      # check chapters
-      reply += checker.chapter_language()
-      
-      # report
-      reply += checker.display_report()
-    except:
-      reply += "\n[ERROR] vdator failed to parse\n"
     
-    # limit reply length
-    reply = reply[:int(os.environ.get("DISCORD_MSG_CHAR_LIMIT"))]
+    # parse mediainfo
+    mediainfo_parser = MediaInfoParser()
+    mediainfo_list = mediainfo_parser.parse(mediainfo)
     
-    if message.channel.name in BOT_CHANNELS:
-      # reply in bot channel
-      await client.send_message(message.channel, reply)
-    elif message.channel.name in REVIEW_CHANNELS:
-      # add reactions in review channel
-      await add_status_reactions(client, message, reply)
+    for i, mediainfo in enumerate(mediainfo_list):
+      reply = ""
+      try:
+        reply = "<" + url + ">" + "\n"
+        checker = Checker(bdinfo, mediainfo)
         
-      # and send reply to
-      for ch in REVIEW_REPLY_CHANNELS:
-        channel = get(message.server.channels, name=ch, type=discord.ChannelType.text)
-        await client.send_message(channel, reply)
+        # check metadata
+        reply += checker.check_movie_name()
+        reply += checker.check_tracks_have_language()
+        reply += checker.check_muxing_mode()
+        
+        # check video
+        reply += checker.check_video_track()
+        
+        # check audio
+        reply += checker.print_audio_track_names()
+        reply += checker.check_audio_track_conversions()
+        
+        # TMDB and IMDb People API
+        reply += checker.check_people()
+        reply += checker.spell_check_commentary()
+        
+        # check text
+        reply += checker.print_text_tracks()
+        reply += checker.text_order()
+        
+        # check chapters
+        reply += checker.chapter_language()
+        
+        # report
+        reply += checker.display_report()
+      except:
+        reply = "\n[ERROR] vdator failed to parse\n"
+        
+      _reply(client, message, reply)
+    
+async def _reply(client, message, reply):
+  # limit reply length
+  reply = reply[:int(os.environ.get("DISCORD_MSG_CHAR_LIMIT"))]
+  
+  if message.channel.name in BOT_CHANNELS:
+    # reply in bot channel
+    await client.send_message(message.channel, reply)
+  elif message.channel.name in REVIEW_CHANNELS:
+    # add reactions in review channel
+    await add_status_reactions(client, message, reply)
+      
+    # and send reply to
+    for ch in REVIEW_REPLY_CHANNELS:
+      channel = get(message.server.channels, name=ch, type=discord.ChannelType.text)
+      await client.send_message(channel, reply)
       
 token = os.environ.get("DISCORD_BOT_SECRET")
 client.run(token)

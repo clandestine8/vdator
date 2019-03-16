@@ -21,15 +21,11 @@ class MediaInfoParser():
       .lower()
 
   def parse(self, text):
-    mediainfo = dict()
-    mediainfo['general'] = list()
-    mediainfo['video'] = list()
-    mediainfo['audio'] = list()
-    mediainfo['text'] = list()
-    mediainfo['menu'] = list()
-
+    # list of mediainfos
+    mediainfo_list = list()
+    
     # starts at 0 on first loop
-    index_general = index_video = index_audio = index_text = index_menu = -1
+    index_mediainfo = index_general = index_video = index_audio = index_text = index_menu = -1
 
     sect = None
 
@@ -40,29 +36,39 @@ class MediaInfoParser():
       # determine current section of mediainfo
       section_word = l.strip().split()[0].strip().lower()
       if section_word == "general":
+        # initialize mediainfo
+        index_mediainfo += 1
+        mediainfo = dict()
+        mediainfo['general'] = list()
+        mediainfo['video'] = list()
+        mediainfo['audio'] = list()
+        mediainfo['text'] = list()
+        mediainfo['menu'] = list()
+        mediainfo_list.append(mediainfo)
+
         index_general += 1
         sect = self.MediaInfoSection.GENERAL
-        mediainfo['general'].append(dict())
+        mediainfo_list[index_mediainfo]['general'].append(dict())
         continue
       elif section_word == "video":
         index_video += 1
         sect = self.MediaInfoSection.VIDEO
-        mediainfo['video'].append(dict())
+        mediainfo_list[index_mediainfo]['video'].append(dict())
         continue
       elif section_word == "audio":
         index_audio += 1
         sect = self.MediaInfoSection.AUDIO
-        mediainfo['audio'].append(dict())
+        mediainfo_list[index_mediainfo]['audio'].append(dict())
         continue
       elif section_word == "text":
         index_text += 1
         sect = self.MediaInfoSection.TEXT
-        mediainfo['text'].append(dict())
+        mediainfo_list[index_mediainfo]['text'].append(dict())
         continue
       elif section_word == "menu":
         index_menu += 1
         sect = self.MediaInfoSection.MENU
-        mediainfo['menu'].append(list())
+        mediainfo_list[index_mediainfo]['menu'].append(list())
         continue
 
       if sect == self.MediaInfoSection.GENERAL:
@@ -71,28 +77,28 @@ class MediaInfoParser():
           continue
         curr[0] = self.format_key(curr[0])
         curr[1] = curr[1].strip()
-        mediainfo['general'][index_general][curr[0]] = curr[1]
+        mediainfo_list[index_mediainfo]['general'][index_general][curr[0]] = curr[1]
       elif sect == self.MediaInfoSection.VIDEO:
         curr = l.split(':', 1)
         if len(curr) < 2:
           continue
         curr[0] = self.format_key(curr[0])
         curr[1] = curr[1].strip()
-        mediainfo['video'][index_video][curr[0]] = curr[1]
+        mediainfo_list[index_mediainfo]['video'][index_video][curr[0]] = curr[1]
       elif sect == self.MediaInfoSection.AUDIO:
         curr = l.split(':', 1)
         if len(curr) < 2:
           continue
         curr[0] = self.format_key(curr[0])
         curr[1] = curr[1].strip()
-        mediainfo['audio'][index_audio][curr[0]] = curr[1]
+        mediainfo_list[index_mediainfo]['audio'][index_audio][curr[0]] = curr[1]
       elif sect == self.MediaInfoSection.TEXT:
         curr = l.split(':', 1)
         if len(curr) < 2:
           continue
         curr[0] = self.format_key(curr[0])
         curr[1] = curr[1].strip()
-        mediainfo['text'][index_text][curr[0]] = curr[1]
+        mediainfo_list[index_mediainfo]['text'][index_text][curr[0]] = curr[1]
       elif sect == self.MediaInfoSection.MENU:
         curr = l.split(' : ', 1)
         chapter = dict()
@@ -107,6 +113,6 @@ class MediaInfoParser():
             chapter['title'] = curr2[1].strip()
           else:
             chapter['title'] = curr[1].strip()
-        mediainfo['menu'][index_menu].append(chapter)
+        mediainfo_list[index_mediainfo]['menu'][index_menu].append(chapter)
 
-    return mediainfo
+    return mediainfo_list
