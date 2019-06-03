@@ -139,23 +139,40 @@ class Checker():
       
     return reply
     
-  def check_tracks_have_language(self):
+  def check_tracks_have_valid_language(self):
     reply, is_valid = "", True
     
-    n_reply, n_is_valid = self._check_tracks_have_language_section('video')
+    n_reply, n_is_valid = self._check_tracks_have_valid_language_section('video')
     reply += n_reply
     is_valid &= n_is_valid
-    n_reply, n_is_valid = self._check_tracks_have_language_section('audio')
+    n_reply, n_is_valid = self._check_tracks_have_valid_language_section('audio')
     reply += n_reply
     is_valid &= n_is_valid
-    n_reply, n_is_valid = self._check_tracks_have_language_section('text')
+    n_reply, n_is_valid = self._check_tracks_have_valid_language_section('text')
     reply += n_reply
     is_valid &= n_is_valid
     
     if is_valid:
-      reply += self.print_report("correct", "All tracks have a language chosen\n")
+      reply += self.print_report("correct", "All tracks have a valid language chosen\n")
     
     return reply
+    
+  def _check_tracks_have_valid_language_section(self, section):
+    reply, is_valid = "", True
+    for i, _ in enumerate(self.mediainfo[section]):
+      if 'language' not in self.mediainfo[section][i]:
+        reply += self.print_report("error", section.capitalize() + " " + self._section_id(section, i) + ": Does not have a language chosen\n")
+        is_valid = False
+      else:
+        language = self.mediainfo[section][i]['language'].capitalize()
+        try:
+          print(language)
+          iso639_languages.get(name=language)
+        except KeyError:
+          # invalid language
+          is_valid = False
+          reply += self.print_report("error", section.capitalize() + " " + self._section_id(section, i) + ": Invalid language set\n")
+    return reply, is_valid
     
   def check_video_language_matches_first_audio_language(self):
     reply = ""
@@ -173,14 +190,6 @@ class Checker():
     else:
       reply += self.print_report("error", "Video language does not match first audio language: `" + self.mediainfo['video'][0]['language'] + "` vs `" + self.mediainfo['audio'][0]['language'] + "`\n")
     return reply
-    
-  def _check_tracks_have_language_section(self, section):
-    reply, is_valid = "", True
-    for i, _ in enumerate(self.mediainfo[section]):
-      if 'language' not in self.mediainfo[section][i]:
-        reply += self.print_report("error", section.capitalize() + " " + self._section_id(section, i) + ": Does not have a language chosen\n")
-        is_valid = False
-    return reply, is_valid
     
   def check_muxing_mode(self):
     reply, is_valid = "", True

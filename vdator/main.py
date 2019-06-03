@@ -100,7 +100,7 @@ async def on_message(message):
       reply += checker.check_movie_name()
       codecs = CodecsParser()
       reply += checker.check_filename(codecs, SOURCE, RELEASE_GROUP)
-      reply += checker.check_tracks_have_language()
+      reply += checker.check_tracks_have_valid_language()
       reply += checker.check_video_language_matches_first_audio_language()
       reply += checker.check_muxing_mode()
       reply += checker.check_mkvmerge()
